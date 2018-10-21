@@ -6,20 +6,42 @@ import axios from 'axios';
 
 const User = t.struct({
   name: t.String,
-  start: t.String,
   destination: t.String,
   phone: t.String
 });
 const Form = t.form.Form;
 
 export default class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      latitude: null,
+      longitude: null,
+      error: null,
+    };
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log("Here is the current location",position)
+        alert("Current location already set!!!")
+        this.setState({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          error: null,
+        });
+      },
+      (error) => this.setState({ error: error.message }),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+    );
+    
+  }
   geocode = () => {
     const value = this._form.getValue(); // use that ref to get the form value
-    var start, destination
+    
     if (value == null) {
       alert("form cannot be empty, do you want to walk home by yourself?")
       return
     }
+    
     axios.get('https://maps.googleapis.com/maps/api/geocode/json',{
       params:{
         address: value.destination,
@@ -28,7 +50,7 @@ export default class App extends React.Component {
     })
     .then(function(response){
       destDetail = response.data.results[0].geometry
-      console.log(destDetail)
+      console.log("Destination detail is" ,destDetail)
     });
   }
 
