@@ -2,12 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"log"
-	"net/http"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"log"
+	"net/http"
 	"time"
 )
 
@@ -22,6 +21,7 @@ type Info struct{
 
 type Partners struct{
 	InfoList	[]Info `json: infoList`
+	DbId 	string `json: dbId`
 }
 
 var db *sql.DB
@@ -58,7 +58,8 @@ func Post(c echo.Context) error {
 		log.Println(err)
 		return err;
 	}
-	info.Id = info.Id + time.Stamp // very wrong
+	ts := time.Now().String()
+	info.Id = info.Id + ts[len(ts) - 50 : ]
 	stmt, err := db.Prepare("INSERT INTO UserStatus(ID, CurLat, CurLong, DestLat, DestLong, Phone) VALUES(?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
@@ -84,22 +85,24 @@ func Post(c echo.Context) error {
 		//partnerInfo := new(Info)
 		err = rows.Scan(&id, &curLong2, &curLat2, &destLat2, &destLong2, &phone);
 		if(Close(info.DestLong, info.DestLat, destLong2, destLat2) &&
-			Close(info.Long, info.Lat, curLong2, curLat2)) {
-			partners = append(partners, Info{Id: id, Long: curLong2, Lat: curLat2, DestLat:destLat2, DestLong:destLong2, Phone:phone})
+			Close(info.Long, info.Lat, curLong2, curLat2) && info.Id != id) {
+			partners = append(partners, Info{Id: id[:len(id)-50], Long: curLong2, Lat: curLat2, DestLat:destLat2, DestLong:destLong2, Phone:phone})
 		}
+
 	}
-	c.JSON(http.StatusOK, Partners{InfoList:partners});
+	c.JSON(http.StatusOK, Partners{InfoList:partners, DbId:info.Id});
 	return nil;
 }
 
 func Confirm(c echo.Context) error {
 	info := new(Info)
+	log.Println(info)
 	err := c.Bind(info)
 	if err != nil {
 		log.Println(err)
 		return err;
 	}
-	_, err = db.Exec("DELETE FROM users WHERE Id = ?", info.Id)
+	_, err = db.Exec("DELETE FROM UserStatus WHERE Id = ?", info.Id)
 	if err != nil {
 		return err
 	}
