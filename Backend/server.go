@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Info struct{
@@ -24,7 +25,7 @@ var err error
 func init() {
 	fmt.Print("Hellodasdsadasdsa")
 	db, err := sql.Open("mysql",
-	"wilson:admin@tcp(35.239.172.63)/projectx")
+	"wilson:admin@tcp(35.239.172.63:3306)/projectx")
 	if err != nil {
 		log.Fatal("no connection to Db")
 	}
